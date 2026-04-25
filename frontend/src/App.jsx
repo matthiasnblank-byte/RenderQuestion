@@ -368,12 +368,7 @@ function ProjectedQuestion({ gameState }) {
   }
 
   if (gameState.status === "finished") {
-    return (
-      <div className="ready-screen">
-        <p>Game finished</p>
-        <h2>Final results</h2>
-      </div>
-    );
+    return <VictoryCeremony scores={gameState.scores} />;
   }
 
   if (!question) {
@@ -457,19 +452,7 @@ function StudentGame({ joinedStudent, gameState, selectedAnswer, answerResult, o
   }, [gameState.scores, joinedStudent.playerId]);
 
   if (gameState.status === "finished") {
-    return (
-      <div className="student-layout">
-        <section className="student-stage">
-          <p className="eyebrow">Final results</p>
-          <h2>The game is complete.</h2>
-          <p className="large-score">Your score: {ownScore}</p>
-        </section>
-        <section className="side-panel">
-          <h2>Leaderboard</h2>
-          <Leaderboard scores={gameState.scores} />
-        </section>
-      </div>
-    );
+    return <VictoryCeremony scores={gameState.scores} ownScore={ownScore} playerId={joinedStudent.playerId} />;
   }
 
   if (gameState.status === "waiting" || gameState.status === "idle") {
@@ -645,6 +628,57 @@ function Leaderboard({ scores }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+const RANK_MEDALS = ["🥇", "🥈", "🥉"];
+const RANK_CLASSES = ["rank-1", "rank-2", "rank-3"];
+
+function VictoryCeremony({ scores, ownScore, playerId }) {
+  const top3 = scores.slice(0, 3);
+  const rest = scores.slice(3);
+
+  // Podium order: 2nd left, 1st center, 3rd right
+  const podiumSlots = top3[1]
+    ? [{ entry: top3[1], rank: 1 }, { entry: top3[0], rank: 0 }, top3[2] ? { entry: top3[2], rank: 2 } : null]
+    : [{ entry: top3[0], rank: 0 }];
+  const podiumOrder = podiumSlots.filter(Boolean);
+
+  return (
+    <div className="victory-wrapper">
+      <div className="victory-title">
+        <p className="eyebrow">Game over</p>
+        <h2>Siegerehrung</h2>
+      </div>
+
+      <div className="podium">
+        {podiumOrder.map(({ entry, rank }) => (
+          <div className={`podium-slot ${RANK_CLASSES[rank]}`} key={entry.id}>
+            <div className="podium-avatar">{RANK_MEDALS[rank]}</div>
+            <div className="podium-name">{entry.name}</div>
+            <div className="podium-score">{entry.score} pts</div>
+            <div className="podium-block">{rank + 1}</div>
+          </div>
+        ))}
+      </div>
+
+      {rest.length > 0 && (
+        <div className="victory-rest">
+          <p className="victory-rest-title">Weitere Ergebnisse</p>
+          <Leaderboard scores={rest.map((e, i) => ({ ...e, _rank: i + 4 }))} startRank={4} />
+        </div>
+      )}
+
+      {ownScore !== undefined && (
+        <p className="muted" style={{ fontSize: "0.9rem" }}>
+          Dein Ergebnis:{" "}
+          <strong style={{ color: "#60a5fa" }}>{ownScore} Punkte</strong>
+          {playerId && scores.findIndex((e) => e.id === playerId) >= 0
+            ? ` · Platz ${scores.findIndex((e) => e.id === playerId) + 1}`
+            : ""}
+        </p>
+      )}
+    </div>
   );
 }
 
