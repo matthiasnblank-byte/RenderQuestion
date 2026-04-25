@@ -1,151 +1,151 @@
 export const questions = [
   {
-    text: "Was ist die Hauptaufgabe von React?",
+    text: "What is the main purpose of React?",
     options: [
-      "Datenbanken verwalten",
-      "Benutzeroberflaechen bauen",
-      "Server konfigurieren",
-      "Betriebssysteme installieren"
+      "Managing operating systems",
+      "Building user interfaces",
+      "Hosting databases",
+      "Sending email campaigns"
     ],
     correctAnswerIndex: 1
   },
   {
-    text: "Wofuer wird Vite in diesem Projekt genutzt?",
+    text: "What is Vite used for in this project?",
     options: [
-      "Als Build-Tool und Dev-Server",
-      "Als Datenbank",
-      "Als CSS-Framework",
-      "Als Authentifizierungsdienst"
+      "A build tool and local development server",
+      "A database engine",
+      "A payment provider",
+      "A monitoring dashboard"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Welche Aufgabe hat Express im Backend?",
+    text: "What does Express provide in the backend?",
     options: [
-      "PDF-Dateien rendern",
-      "HTTP-Routen bereitstellen",
-      "React-Komponenten kompilieren",
-      "Bilder komprimieren"
-    ],
-    correctAnswerIndex: 1
-  },
-  {
-    text: "Warum nutzt der Server process.env.PORT?",
-    options: [
-      "Damit Render den Port vorgeben kann",
-      "Damit der Browser schneller laedt",
-      "Damit Socket.io deaktiviert wird",
-      "Damit Fragen gespeichert werden"
+      "HTTP routes and middleware",
+      "Browser rendering",
+      "CSS animations",
+      "Static image editing"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Was bedeutet RAM-only State in dieser App?",
+    text: "Why does the backend read process.env.PORT?",
     options: [
-      "Der Zustand liegt nur im Backend-Speicher",
-      "Der Zustand liegt in einer SQL-Datenbank",
-      "Der Zustand wird in Redis gespeichert",
-      "Der Zustand wird im GitHub-Repo gespeichert"
+      "So Render can provide the runtime port",
+      "So students can choose a port",
+      "So questions are stored permanently",
+      "So React can compile faster"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Welches Socket.io-Event sendet eine Antwort ab?",
+    text: "What does in-memory game state mean?",
+    options: [
+      "Game state is stored only in the backend process RAM",
+      "Game state is stored in PostgreSQL",
+      "Game state is stored in Redis",
+      "Game state is stored in the browser URL"
+    ],
+    correctAnswerIndex: 0
+  },
+  {
+    text: "Which Socket.io event submits a student answer?",
     options: [
       "join-game",
       "submit-answer",
-      "scores-updated",
+      "players-updated",
       "game-ended"
     ],
     correctAnswerIndex: 1
   },
   {
-    text: "Wie viele Punkte gibt es pro richtiger Antwort?",
+    text: "How long is each timed question?",
     options: [
-      "10",
-      "50",
-      "100",
-      "1000"
+      "10 seconds",
+      "20 seconds",
+      "30 seconds",
+      "60 seconds"
     ],
     correctAnswerIndex: 2
   },
   {
-    text: "Was verhindert die App pro Frage?",
+    text: "What happens when a student answers correctly very quickly?",
     options: [
-      "Mehr als eine Antwort pro Teilnehmer",
-      "Mehr als vier Teilnehmer",
-      "Mehr als eine Frage insgesamt",
-      "Mehr als einen Dozenten"
+      "They receive more points than a slow correct answer",
+      "They receive no points",
+      "The game restarts",
+      "The question is deleted"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Welche Environment Variable braucht das Frontend?",
+    text: "What does the frontend environment variable configure?",
     options: [
-      "DATABASE_URL",
-      "REDIS_URL",
-      "VITE_BACKEND_URL",
-      "FRONTEND_URL"
-    ],
-    correctAnswerIndex: 2
-  },
-  {
-    text: "Welche Environment Variable braucht das Backend fuer CORS?",
-    options: [
-      "FRONTEND_URL",
-      "VITE_BACKEND_URL",
-      "CACHE_URL",
-      "QUIZ_SECRET"
+      "The backend service URL",
+      "The database password",
+      "The browser language",
+      "The Git branch"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Welcher Render-Service passt zum Frontend?",
+    text: "What does the backend FRONTEND_URL variable help configure?",
     options: [
-      "PostgreSQL",
+      "CORS access for the frontend",
+      "The maximum question score",
+      "The number of questions",
+      "The package manager"
+    ],
+    correctAnswerIndex: 0
+  },
+  {
+    text: "Which Render service type should host the frontend?",
+    options: [
       "Static Site",
+      "PostgreSQL",
       "Redis",
-      "Cron Job"
+      "Background Worker only"
     ],
-    correctAnswerIndex: 1
+    correctAnswerIndex: 0
   },
   {
-    text: "Welcher Render-Service passt zum Backend?",
+    text: "Which Render service type should host the backend?",
     options: [
       "Web Service",
       "Static Site",
-      "Private Service ohne Port",
-      "Disk Storage"
+      "Object Storage",
+      "Cron Job only"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Was ist ein Monorepo in diesem Kontext?",
+    text: "What is a monorepo in this project?",
     options: [
-      "Ein Repo mit Frontend und Backend",
-      "Ein Repo nur fuer Bilder",
-      "Ein Repo ohne package.json",
-      "Ein Repo fuer genau eine Datei"
+      "One repository containing both frontend and backend code",
+      "One repository containing only screenshots",
+      "One repository without package files",
+      "One repository for a single HTML file"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Was macht das Event next-question?",
+    text: "What happens during the transition between questions?",
     options: [
-      "Es zeigt die naechste Frage an",
-      "Es loescht alle Teilnehmer",
-      "Es erstellt ein neues GitHub-Repo",
-      "Es installiert Abhaengigkeiten"
+      "Answers are closed and the next question is prepared",
+      "Students can answer twice",
+      "The game code changes",
+      "The backend switches to a database"
     ],
     correctAnswerIndex: 0
   },
   {
-    text: "Was passiert bei einem Backend-Neustart?",
+    text: "What happens to active games if the backend restarts?",
     options: [
-      "Laufende Spiele gehen verloren",
-      "Alle Spiele werden aus Redis geladen",
-      "Alle Punkte bleiben in einer Datenbank",
-      "Render startet automatisch ein Frontend-Spiel"
+      "Active games are lost because state is only in memory",
+      "Active games are restored from Redis",
+      "Active games are restored from a database",
+      "Active games move to the frontend automatically"
     ],
     correctAnswerIndex: 0
   }

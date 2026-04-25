@@ -3,33 +3,39 @@ import { io } from "socket.io-client";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
-function emptyQuestionState() {
-  return {
-    gameCode: "",
-    status: "idle",
-    question: null,
-    answerCounts: [0, 0, 0, 0],
-    answeredPlayerIds: []
-  };
-}
+const initialGameState = {
+  gameCode: "",
+  status: "idle",
+  players: [],
+  scores: [],
+  currentQuestionIndex: -1,
+  question: null,
+  questionStartedAt: null,
+  questionEndsAt: null,
+  transitionEndsAt: null,
+  questionDurationMs: 30000,
+  transitionDurationMs: 3000,
+  answerCounts: [0, 0, 0, 0],
+  submittedAnswers: 0,
+  totalQuestions: 15,
+  correctAnswerIndex: null
+};
 
 function App() {
-  const [role, setRole] = useState("teacher");
+  const [view, setView] = useState("student");
   const [socket, setSocket] = useState(null);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
   const [gameCode, setGameCode] = useState("");
-  const [studentCode, setStudentCode] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [studentName, setStudentName] = useState("");
-  const [players, setPlayers] = useState([]);
-  const [scores, setScores] = useState([]);
-  const [questionState, setQuestionState] = useState(emptyQuestionState);
-  const [feedback, setFeedback] = useState(null);
+  const [joinedStudent, setJoinedStudent] = useState(null);
+  const [gameState, setGameState] = useState(initialGameState);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [isJoined, setIsJoined] = useState(false);
-  const [isEnded, setIsEnded] = useState(false);
+  const [answerResult, setAnswerResult] = useState(null);
   const [message, setMessage] = useState("");
-  const [isCreatingGame, setIsCreatingGame] = useState(false);
-
-  const activeGameCode = role === "teacher" ? gameCode : studentCode;
+  const [lastQuestionIndex, setLastQuestionIndex] = useState(-1);
 
   useEffect(() => {
     const nextSocket = io(BACKEND_URL, {
@@ -38,36 +44,70 @@ function App() {
 
     setSocket(nextSocket);
 
-    nextSocket.on("players-updated", ({ players: nextPlayers }) => {
-      setPlayers(nextPlayers || []);
+    nextSocket.on("admin-auth-success", () => {
+      setIsAdminAuthenticated(true);
+      setAdminError("");
+      setAdminPassword("");
     });
 
-    nextSocket.on("question-updated", (payload) => {
-      setQuestionState(payload || emptyQuestionState());
-      setFeedback(null);
+    nextSocket.on("admin-auth-failed", ({ message: errorMessage } = {}) => {
+      setIsAdminAuthenticated(false);
+      setAdminError(errorMessage || "Incorrect admin password.");
+    });
+
+    nextSocket.on("game-created", ({ gameCode: createdCode }) => {
+      setGameCode(createdCode);
+      setMessage("");
+    });
+
+    nextSocket.on("joined-game", ({ gameCode: joinedCode, name, playerId }) => {
+      setJoinedStudent({ gameCode: joinedCode, name, playerId });
+      setJoinCode(joinedCode);
+      setStudentName(name);
+      setMessage("");
+    });
+
+    nextSocket.on("game-state-updated", (state) => {
+      setGameState({ ...initialGameState, ...state });
+      if (state?.gameCode) {
+        setGameCode((current) => current || state.gameCode);
+      }
+    });
+
+    nextSocket.on("question-started", (state) => {
+      setGameState({ ...initialGameState, ...state });
       setSelectedAnswer(null);
-      setIsEnded(false);
+      setAnswerResult(null);
     });
 
-    nextSocket.on("scores-updated", ({ scores: nextScores }) => {
-      setScores(nextScores || []);
+    nextSocket.on("question-ended", (state) => {
+      setGameState({ ...initialGameState, ...state });
     });
 
-    nextSocket.on("game-ended", ({ scores: finalScores }) => {
-      setScores(finalScores || []);
-      setQuestionState((current) => ({ ...current, status: "ended" }));
-      setIsEnded(true);
-      setFeedback(null);
+    nextSocket.on("transition-started", (state) => {
+      setGameState({ ...initialGameState, ...state });
+    });
+
+    nextSocket.on("scores-updated", ({ scores } = {}) => {
+      setGameState((current) => ({ ...current, scores: scores || [] }));
+    });
+
+    nextSocket.on("players-updated", ({ players } = {}) => {
+      setGameState((current) => ({ ...current, players: players || [] }));
+    });
+
+    nextSocket.on("answer-result", (result) => {
+      setAnswerResult(result);
+    });
+
+    nextSocket.on("game-ended", (state) => {
+      setGameState({ ...initialGameState, ...state, status: "finished" });
       setSelectedAnswer(null);
     });
 
-    nextSocket.on("answer-feedback", (payload) => {
-      setFeedback(payload);
-    });
-
-    nextSocket.on("error-message", (text) => {
-      setMessage(text);
-      window.setTimeout(() => setMessage(""), 3500);
+    nextSocket.on("error-message", (errorMessage) => {
+      setMessage(errorMessage);
+      window.setTimeout(() => setMessage(""), 4000);
     });
 
     return () => {
@@ -76,149 +116,138 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setFeedback(null);
-    setSelectedAnswer(null);
-    setMessage("");
-  }, [role]);
-
-  const ownScore = useMemo(() => {
-    if (!studentName.trim()) return null;
-    return scores.find((entry) => entry.name === studentName.trim())?.score ?? 0;
-  }, [scores, studentName]);
-
-  async function createGame() {
-    setIsCreatingGame(true);
-    setMessage("");
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/games`, {
-        method: "POST"
-      });
-
-      if (!response.ok) {
-        throw new Error("Spiel konnte nicht erstellt werden.");
-      }
-
-      const data = await response.json();
-      setGameCode(data.gameCode);
-      setQuestionState(emptyQuestionState());
-      setPlayers([]);
-      setScores([]);
-      setIsEnded(false);
-
-      if (socket) {
-        socket.emit("join-game", {
-          gameCode: data.gameCode,
-          name: "Dozent",
-          role: "teacher"
-        });
-      }
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setIsCreatingGame(false);
+    const nextIndex = gameState.currentQuestionIndex;
+    if (nextIndex !== lastQuestionIndex && gameState.status === "running") {
+      setSelectedAnswer(null);
+      setAnswerResult(null);
+      setLastQuestionIndex(nextIndex);
     }
+  }, [gameState.currentQuestionIndex, gameState.status, lastQuestionIndex]);
+
+  const activeCode = view === "admin" ? gameCode : joinedStudent?.gameCode || joinCode;
+
+  function submitAdminPassword(event) {
+    event.preventDefault();
+    setAdminError("");
+    socket?.emit("validate-admin-password", {
+      password: adminPassword
+    });
+  }
+
+  function createGame() {
+    socket?.emit("create-game");
   }
 
   function startGame() {
-    if (!socket || !gameCode) return;
-    socket.emit("start-game", { gameCode });
+    socket?.emit("start-game", { gameCode });
   }
 
-  function nextQuestion() {
-    if (!socket || !gameCode) return;
-    socket.emit("next-question", { gameCode });
+  function forceNextQuestion() {
+    socket?.emit("force-next-question", { gameCode });
+  }
+
+  function endGame() {
+    socket?.emit("end-game", { gameCode });
+  }
+
+  function resetGame() {
+    socket?.emit("reset-game", { gameCode });
+    setJoinedStudent(null);
+    setSelectedAnswer(null);
+    setAnswerResult(null);
   }
 
   function joinGame(event) {
     event.preventDefault();
-    if (!socket) return;
 
-    const normalizedCode = studentCode.trim();
+    const normalizedCode = joinCode.trim();
     const normalizedName = studentName.trim();
 
     if (!normalizedCode || !normalizedName) {
-      setMessage("Bitte Spielcode und Namen eingeben.");
+      setMessage("Enter a game code and your name.");
       return;
     }
 
-    socket.emit("join-game", {
+    socket?.emit("join-game", {
       gameCode: normalizedCode,
       name: normalizedName
     });
-    setStudentCode(normalizedCode);
-    setStudentName(normalizedName);
-    setIsJoined(true);
-    setIsEnded(false);
   }
 
   function submitAnswer(answerIndex) {
-    if (!socket || feedback || selectedAnswer !== null) return;
+    if (!joinedStudent || gameState.status !== "running" || answerResult) {
+      return;
+    }
+
     setSelectedAnswer(answerIndex);
-    socket.emit("submit-answer", {
-      gameCode: studentCode,
+    socket?.emit("submit-answer", {
+      gameCode: joinedStudent.gameCode,
       answerIndex
     });
   }
 
-  const question = questionState.question;
-
   return (
     <main className="app-shell">
-      <section className="topbar">
+      <header className="topbar">
         <div>
-          <p className="eyebrow">Live Quiz</p>
-          <h1>Kahoot-aehnliche Lehrveranstaltung</h1>
+          <p className="eyebrow">Live classroom quiz</p>
+          <h1>Final Questions</h1>
         </div>
-        <div className="role-switch" aria-label="Ansicht wechseln">
-          <button className={role === "teacher" ? "active" : ""} onClick={() => setRole("teacher")}>
-            Dozent
+        <div className="view-switch" aria-label="Choose view">
+          <button className={view === "student" ? "active" : ""} onClick={() => setView("student")}>
+            Student
           </button>
-          <button className={role === "student" ? "active" : ""} onClick={() => setRole("student")}>
-            Studierende
+          <button className={view === "admin" ? "active" : ""} onClick={() => setView("admin")}>
+            Host
           </button>
         </div>
-      </section>
+      </header>
 
       {message ? <div className="notice">{message}</div> : null}
 
-      {role === "teacher" ? (
-        <TeacherView
-          gameCode={gameCode}
-          players={players}
-          scores={scores}
-          question={question}
-          questionState={questionState}
-          isEnded={isEnded}
-          isCreatingGame={isCreatingGame}
-          onCreateGame={createGame}
-          onStartGame={startGame}
-          onNextQuestion={nextQuestion}
+      {view === "admin" ? (
+        isAdminAuthenticated ? (
+          <AdminDashboard
+            gameCode={gameCode}
+            gameState={gameState}
+            onCreateGame={createGame}
+            onStartGame={startGame}
+            onForceNextQuestion={forceNextQuestion}
+            onEndGame={endGame}
+            onResetGame={resetGame}
+          />
+        ) : (
+          <AdminLogin
+            password={adminPassword}
+            setPassword={setAdminPassword}
+            error={adminError}
+            onSubmit={submitAdminPassword}
+          />
+        )
+      ) : joinedStudent ? (
+        <StudentGame
+          joinedStudent={joinedStudent}
+          gameState={gameState}
+          selectedAnswer={selectedAnswer}
+          answerResult={answerResult}
+          onSubmitAnswer={submitAnswer}
         />
       ) : (
-        <StudentView
-          studentCode={studentCode}
+        <StudentJoin
+          joinCode={joinCode}
+          setJoinCode={setJoinCode}
           studentName={studentName}
-          setStudentCode={setStudentCode}
           setStudentName={setStudentName}
-          isJoined={isJoined}
-          question={question}
-          feedback={feedback}
-          selectedAnswer={selectedAnswer}
-          scores={scores}
-          ownScore={ownScore}
-          isEnded={isEnded}
           onJoinGame={joinGame}
-          onSubmitAnswer={submitAnswer}
         />
       )}
 
       <footer>
         Backend: <code>{BACKEND_URL}</code>
-        {activeGameCode ? (
+        {activeCode ? (
           <>
             {" "}
-            | Spielcode: <code>{activeGameCode}</code>
+            | Game code: <code>{activeCode}</code>
           </>
         ) : null}
       </footer>
@@ -226,201 +255,369 @@ function App() {
   );
 }
 
-function TeacherView({
+function AdminLogin({ password, setPassword, error, onSubmit }) {
+  return (
+    <section className="auth-panel">
+      <div>
+        <p className="eyebrow">Host access</p>
+        <h2>Enter the admin password</h2>
+        <p className="muted">Students do not need this password to join a game.</p>
+      </div>
+      <form className="login-form" onSubmit={onSubmit}>
+        <label>
+          Admin password
+          <input
+            value={password}
+            type="password"
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter password"
+          />
+        </label>
+        {error ? <div className="inline-error">{error}</div> : null}
+        <button type="submit">Unlock host dashboard</button>
+      </form>
+    </section>
+  );
+}
+
+function AdminDashboard({
   gameCode,
-  players,
-  scores,
-  question,
-  questionState,
-  isEnded,
-  isCreatingGame,
+  gameState,
   onCreateGame,
   onStartGame,
-  onNextQuestion
+  onForceNextQuestion,
+  onEndGame,
+  onResetGame
 }) {
+  const canStart = gameCode && (gameState.status === "waiting" || gameState.status === "finished");
+  const isRunning = gameState.status === "running" || gameState.status === "transition";
+
   return (
-    <div className="grid two-columns">
-      <section className="panel">
-        <h2>Dozentenansicht</h2>
-        <div className="actions">
-          <button onClick={onCreateGame} disabled={isCreatingGame}>
-            {isCreatingGame ? "Erstelle..." : "Spiel erstellen"}
-          </button>
-          <button onClick={onStartGame} disabled={!gameCode}>
-            Spiel starten
-          </button>
-          <button onClick={onNextQuestion} disabled={!gameCode || !question || isEnded}>
-            Naechste Frage
-          </button>
+    <div className="admin-layout">
+      <section className="hero-panel">
+        <div className="host-meta">
+          <StatusBadge status={gameState.status} />
+          <span>{gameState.players.length} connected students</span>
+          <span>{gameState.submittedAnswers || 0} submitted answers</span>
         </div>
 
         {gameCode ? (
           <div className="game-code">
-            <span>Spielcode</span>
+            <span>Game code</span>
             <strong>{gameCode}</strong>
           </div>
         ) : (
-          <p className="muted">Erstelle ein Spiel, um einen sechsstelligen Code zu erhalten.</p>
-        )}
-
-        <CurrentQuestion question={question} questionState={questionState} showCounts />
-      </section>
-
-      <section className="panel">
-        <h2>Teilnehmer live</h2>
-        <PlayerList players={players} />
-      </section>
-
-      <section className="panel span-two">
-        <h2>{isEnded ? "Endergebnis" : "Punktestand"}</h2>
-        <Scoreboard scores={scores} />
-      </section>
-    </div>
-  );
-}
-
-function StudentView({
-  studentCode,
-  studentName,
-  setStudentCode,
-  setStudentName,
-  isJoined,
-  question,
-  feedback,
-  selectedAnswer,
-  scores,
-  ownScore,
-  isEnded,
-  onJoinGame,
-  onSubmitAnswer
-}) {
-  return (
-    <div className="grid two-columns">
-      <section className="panel">
-        <h2>Studierendenansicht</h2>
-        <form className="join-form" onSubmit={onJoinGame}>
-          <label>
-            Spielcode
-            <input
-              value={studentCode}
-              onChange={(event) => setStudentCode(event.target.value)}
-              placeholder="123456"
-              maxLength={6}
-            />
-          </label>
-          <label>
-            Name
-            <input
-              value={studentName}
-              onChange={(event) => setStudentName(event.target.value)}
-              placeholder="Dein Name"
-              maxLength={40}
-            />
-          </label>
-          <button type="submit">Spiel beitreten</button>
-        </form>
-
-        {isJoined ? (
-          <div className="status-row">
-            <span>Beigetreten als {studentName}</span>
-            <strong>{ownScore ?? 0} Punkte</strong>
+          <div className="empty-stage">
+            <h2>Create a game</h2>
+            <p>Start by creating a six-digit code for your class.</p>
           </div>
-        ) : null}
-      </section>
-
-      <section className="panel">
-        <h2>Aktuelle Frage</h2>
-        {isEnded ? (
-          <p className="muted">Das Spiel ist beendet.</p>
-        ) : (
-          <StudentQuestion
-            question={question}
-            feedback={feedback}
-            selectedAnswer={selectedAnswer}
-            onSubmitAnswer={onSubmitAnswer}
-          />
         )}
+
+        <ProjectedQuestion gameState={gameState} />
+
+        <div className="controls">
+          <button onClick={onCreateGame}>Create game</button>
+          <button onClick={onStartGame} disabled={!canStart}>
+            Start game
+          </button>
+          <button onClick={onForceNextQuestion} disabled={!isRunning}>
+            Force next question
+          </button>
+          <button className="danger" onClick={onEndGame} disabled={!gameCode || gameState.status === "finished"}>
+            End game
+          </button>
+          <button className="secondary" onClick={onResetGame} disabled={!gameCode}>
+            Reset game
+          </button>
+        </div>
       </section>
 
-      <section className="panel span-two">
-        <h2>{isEnded ? "Endergebnis" : "Aktueller Punktestand"}</h2>
-        <Scoreboard scores={scores} />
-      </section>
+      <aside className="side-panel">
+        <h2>Live leaderboard</h2>
+        <Leaderboard scores={gameState.scores} />
+      </aside>
+
+      <aside className="side-panel">
+        <h2>Connected students</h2>
+        <PlayerList players={gameState.players} />
+      </aside>
     </div>
   );
 }
 
-function CurrentQuestion({ question, questionState, showCounts = false }) {
-  if (!question) {
-    return <p className="muted">Noch keine Frage aktiv.</p>;
+function ProjectedQuestion({ gameState }) {
+  const question = gameState.question;
+
+  if (gameState.status === "transition" && gameState.currentQuestionIndex < 0) {
+    return (
+      <div className="ready-screen pulse">
+        <p>Game starting</p>
+        <h2>Get ready</h2>
+        <Timer targetTime={gameState.transitionEndsAt} label="First question starts in" />
+      </div>
+    );
   }
 
+  if (gameState.status === "waiting") {
+    return (
+      <div className="empty-stage">
+        <h2>Waiting for players</h2>
+        <p>Share the game code, then start when the class is ready.</p>
+      </div>
+    );
+  }
+
+  if (gameState.status === "finished") {
+    return (
+      <div className="ready-screen">
+        <p>Game finished</p>
+        <h2>Final results</h2>
+      </div>
+    );
+  }
+
+  if (!question) {
+    return (
+      <div className="empty-stage">
+        <h2>No active question</h2>
+        <p>The next question will appear here.</p>
+      </div>
+    );
+  }
+
+  const isTransition = gameState.status === "transition";
+
   return (
-    <div className="question-block">
-      <p className="question-progress">
-        Frage {question.index + 1} von {question.total}
-      </p>
-      <h3>{question.text}</h3>
-      <div className="answers">
+    <div className={`projected-question ${isTransition ? "closed" : "active-question"}`}>
+      <div className="question-header">
+        <span>
+          Question {question.index + 1} of {question.total}
+        </span>
+        {isTransition ? (
+          <Timer targetTime={gameState.transitionEndsAt} label="Next question in" />
+        ) : (
+          <Timer targetTime={gameState.questionEndsAt} label="Time left" urgentAt={8000} />
+        )}
+      </div>
+      <h2>{question.text}</h2>
+      <div className="option-grid">
         {question.options.map((option, index) => (
-          <div className="answer-row" key={option}>
-            <span>{option}</span>
-            {showCounts ? <strong>{questionState.answerCounts[index]} Antworten</strong> : null}
+          <div
+            className={gameState.correctAnswerIndex === index ? "option correct-option" : "option"}
+            key={option}
+          >
+            <span>{String.fromCharCode(65 + index)}</span>
+            <strong>{option}</strong>
+            <em>{gameState.answerCounts[index]} answers</em>
           </div>
         ))}
       </div>
+      {isTransition ? <div className="closed-banner">Question closed. Answers are locked.</div> : null}
     </div>
   );
 }
 
-function StudentQuestion({ question, feedback, selectedAnswer, onSubmitAnswer }) {
-  if (!question) {
-    return <p className="muted">Warte, bis die naechste Frage gestartet wird.</p>;
+function StudentJoin({ joinCode, setJoinCode, studentName, setStudentName, onJoinGame }) {
+  return (
+    <section className="student-entry">
+      <div className="entry-copy">
+        <p className="eyebrow">Student entry</p>
+        <h2>Join Final Questions</h2>
+        <p>Enter the code from your host and your display name.</p>
+      </div>
+      <form className="join-form" onSubmit={onJoinGame}>
+        <label>
+          Game code
+          <input
+            value={joinCode}
+            onChange={(event) => setJoinCode(event.target.value)}
+            placeholder="123456"
+            maxLength={6}
+            inputMode="numeric"
+          />
+        </label>
+        <label>
+          Your name
+          <input
+            value={studentName}
+            onChange={(event) => setStudentName(event.target.value)}
+            placeholder="Your name"
+            maxLength={40}
+          />
+        </label>
+        <button type="submit">Join game</button>
+      </form>
+    </section>
+  );
+}
+
+function StudentGame({ joinedStudent, gameState, selectedAnswer, answerResult, onSubmitAnswer }) {
+  const ownScore = useMemo(() => {
+    return gameState.scores.find((entry) => entry.id === joinedStudent.playerId)?.score ?? 0;
+  }, [gameState.scores, joinedStudent.playerId]);
+
+  if (gameState.status === "finished") {
+    return (
+      <div className="student-layout">
+        <section className="student-stage">
+          <p className="eyebrow">Final results</p>
+          <h2>The game is complete.</h2>
+          <p className="large-score">Your score: {ownScore}</p>
+        </section>
+        <section className="side-panel">
+          <h2>Leaderboard</h2>
+          <Leaderboard scores={gameState.scores} />
+        </section>
+      </div>
+    );
+  }
+
+  if (gameState.status === "waiting" || gameState.status === "idle") {
+    return <StudentWaiting joinedStudent={joinedStudent} ownScore={ownScore} />;
+  }
+
+  if (gameState.status === "transition" && gameState.currentQuestionIndex < 0) {
+    return (
+      <section className="student-stage ready-screen pulse">
+        <p>You have joined the game.</p>
+        <h2>Get ready</h2>
+        <Timer targetTime={gameState.transitionEndsAt} label="First question starts in" />
+      </section>
+    );
+  }
+
+  if (gameState.status === "transition") {
+    return (
+      <div className="student-layout">
+        <section className="student-stage">
+          <p className="eyebrow">Question closed</p>
+          <h2>Waiting for the next question</h2>
+          {answerResult ? (
+            <AnswerResult result={answerResult} />
+          ) : (
+            <p className="muted">No answer was submitted for this question.</p>
+          )}
+          <Timer targetTime={gameState.transitionEndsAt} label="Next question starts in" />
+        </section>
+        <section className="side-panel">
+          <h2>Your class leaderboard</h2>
+          <Leaderboard scores={gameState.scores} />
+        </section>
+      </div>
+    );
   }
 
   return (
-    <div className="question-block">
-      <p className="question-progress">
-        Frage {question.index + 1} von {question.total}
-      </p>
-      <h3>{question.text}</h3>
-      <div className="answer-buttons">
-        {question.options.map((option, index) => {
-          const isSelected = selectedAnswer === index;
-          const isCorrect = feedback?.correctAnswerIndex === index;
-          const className = [
-            isSelected ? "selected" : "",
-            feedback && isCorrect ? "correct" : "",
-            feedback && isSelected && !feedback.isCorrect ? "wrong" : ""
-          ]
-            .filter(Boolean)
-            .join(" ");
-
-          return (
-            <button
-              key={option}
-              className={className}
-              onClick={() => onSubmitAnswer(index)}
-              disabled={Boolean(feedback) || selectedAnswer !== null}
-            >
-              {option}
-            </button>
-          );
-        })}
-      </div>
-
-      {feedback ? (
-        <div className={feedback.isCorrect ? "feedback correct-text" : "feedback wrong-text"}>
-          {feedback.isCorrect ? "Richtig. +100 Punkte." : "Leider falsch."}
+    <div className="student-layout">
+      <section className="student-stage">
+        <div className="question-header">
+          <span>
+            Question {gameState.question.index + 1} of {gameState.question.total}
+          </span>
+          <Timer targetTime={gameState.questionEndsAt} label="Time left" urgentAt={8000} />
         </div>
-      ) : null}
+        <h2>{gameState.question.text}</h2>
+        <div className="answer-grid">
+          {gameState.question.options.map((option, index) => {
+            const isSelected = selectedAnswer === index;
+            const isCorrect = answerResult?.correctAnswerIndex === index;
+            const className = [
+              "answer-button",
+              isSelected ? "selected" : "",
+              answerResult && isCorrect ? "correct" : "",
+              answerResult && isSelected && !answerResult.isCorrect ? "wrong" : ""
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <button
+                className={className}
+                disabled={Boolean(answerResult) || selectedAnswer !== null}
+                key={option}
+                onClick={() => onSubmitAnswer(index)}
+              >
+                <span>{String.fromCharCode(65 + index)}</span>
+                {option}
+              </button>
+            );
+          })}
+        </div>
+        {answerResult ? <AnswerResult result={answerResult} /> : null}
+      </section>
+
+      <section className="side-panel">
+        <h2>Your score</h2>
+        <p className="large-score">{ownScore}</p>
+        <Leaderboard scores={gameState.scores} />
+      </section>
     </div>
   );
+}
+
+function StudentWaiting({ joinedStudent, ownScore }) {
+  return (
+    <section className="student-waiting">
+      <p className="eyebrow">Joined successfully</p>
+      <h2>You have joined the game.</h2>
+      <p className="waiting-text">Waiting for the host to start...</p>
+      <div className="waiting-details">
+        <span>Name</span>
+        <strong>{joinedStudent.name}</strong>
+        <span>Game code</span>
+        <strong>{joinedStudent.gameCode}</strong>
+        <span>Current score</span>
+        <strong>{ownScore}</strong>
+      </div>
+    </section>
+  );
+}
+
+function AnswerResult({ result }) {
+  return (
+    <div className={result.isCorrect ? "answer-result correct-result" : "answer-result wrong-result"}>
+      <strong>{result.isCorrect ? "Correct" : "Incorrect"}</strong>
+      <span>{result.pointsAwarded} points awarded</span>
+      <small>{result.message || "Waiting for the next question."}</small>
+    </div>
+  );
+}
+
+function Timer({ targetTime, label, urgentAt = 0 }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const remainingMs = Math.max(0, Number(targetTime || 0) - now);
+  const seconds = Math.ceil(remainingMs / 1000);
+  const isUrgent = urgentAt > 0 && remainingMs <= urgentAt;
+
+  return (
+    <div className={isUrgent ? "timer urgent" : "timer"}>
+      <span>{label}</span>
+      <strong>{seconds}s</strong>
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const labelByStatus = {
+    idle: "Loading",
+    waiting: "Waiting for players",
+    running: "Question active",
+    transition: "Transition",
+    finished: "Finished"
+  };
+
+  return <span className={`status-badge ${status}`}>{labelByStatus[status] || status}</span>;
 }
 
 function PlayerList({ players }) {
   if (!players.length) {
-    return <p className="muted">Noch keine Teilnehmer beigetreten.</p>;
+    return <p className="muted">No students have joined yet.</p>;
   }
 
   return (
@@ -432,13 +629,13 @@ function PlayerList({ players }) {
   );
 }
 
-function Scoreboard({ scores }) {
+function Leaderboard({ scores }) {
   if (!scores.length) {
-    return <p className="muted">Noch keine Punkte vorhanden.</p>;
+    return <p className="muted">No scores yet.</p>;
   }
 
   return (
-    <ol className="scoreboard">
+    <ol className="leaderboard">
       {scores.map((entry, index) => (
         <li key={entry.id}>
           <span>

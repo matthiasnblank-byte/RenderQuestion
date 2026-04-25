@@ -1,11 +1,11 @@
-# RenderQuestion
+# Final Questions
 
-Eine einfache Kahoot-aehnliche Web-App fuer eine Lehrveranstaltung mit ca. 30 Studierenden und 15 Beispiel-Fragen.
+Final Questions is a simple classroom quiz application for an English-language university course. It supports about 30 students and 15 timed questions.
 
-Das Projekt ist ein Monorepo mit zwei getrennten Apps:
+The app is deployed from one GitHub monorepo:
 
 ```text
-quiz-game/
+final-questions/
   frontend/
     package.json
     index.html
@@ -18,22 +18,25 @@ quiz-game/
     src/
       server.js
       questions.js
+  docs/
+  features/
   README.md
 ```
 
-## Technischer Aufbau
+## Technical Overview
 
 - Frontend: React, Vite, socket.io-client
 - Backend: Node.js, Express, Socket.io, CORS
-- Persistenz: keine Datenbank, kein Redis, kein Cache, kein externer Persistenzdienst
-- Spielzustand: ausschliesslich im RAM des Backend-Prozesses in `const games = new Map()`
-- Bei einem Backend-Neustart gehen laufende Spiele verloren
+- Deployment: Render Static Site for `frontend/`, Render Web Service for `backend/`
+- Persistence: no database, no Redis, no cache, no external persistence service
+- Game state: stored only in backend RAM with `const games = new Map()`
+- Restart behavior: active games are lost when the backend restarts
 
-## Lokal starten
+## Local Development
 
-Oeffne zwei Terminals: eins fuer das Backend und eins fuer das Frontend.
+Use two terminals: one for the backend and one for the frontend.
 
-### Backend lokal starten
+### Start the Backend
 
 ```bash
 cd backend
@@ -41,7 +44,7 @@ npm install
 npm run dev
 ```
 
-Alternativ ohne Nodemon:
+Or without Nodemon:
 
 ```bash
 cd backend
@@ -49,13 +52,13 @@ npm install
 npm start
 ```
 
-Das Backend laeuft lokal standardmaessig auf:
+The backend runs locally at:
 
 ```text
 http://localhost:4000
 ```
 
-### Frontend lokal starten
+### Start the Frontend
 
 ```bash
 cd frontend
@@ -63,7 +66,7 @@ npm install
 npm run dev
 ```
 
-Das Frontend laeuft lokal standardmaessig auf:
+The frontend runs locally at:
 
 ```text
 http://localhost:5173
@@ -73,73 +76,107 @@ http://localhost:5173
 
 ### Backend
 
-Das Backend nutzt:
-
 ```text
 FRONTEND_URL=http://localhost:5173
+ADMIN_PASSWORD=123456
 PORT=4000
 ```
 
-`PORT` muss nicht lokal gesetzt werden, weil der Server automatisch `4000` als Fallback nutzt. Auf Render wird `PORT` automatisch gesetzt und vom Server ueber `process.env.PORT` verwendet.
+`ADMIN_PASSWORD` is optional. If it is not set, the backend uses `123456`.
 
-Beispiel:
+`PORT` does not need to be set locally because the server falls back to `4000`. On Render, `PORT` is provided automatically and the backend reads it from `process.env.PORT`.
+
+Example:
 
 ```bash
 cd backend
-FRONTEND_URL=http://localhost:5173 npm run dev
+FRONTEND_URL=http://localhost:5173 ADMIN_PASSWORD=123456 npm run dev
 ```
 
 ### Frontend
 
-Das Frontend nutzt:
-
 ```text
 VITE_BACKEND_URL=http://localhost:4000
 ```
 
-Lokal ist dieser Wert bereits als Fallback im Code gesetzt. Optional kann im Ordner `frontend` eine `.env`-Datei angelegt werden:
+The frontend has `http://localhost:4000` as a local fallback. On Render, set `VITE_BACKEND_URL` to the backend Web Service URL and redeploy the Static Site.
+
+## Gameplay
+
+1. The host opens the Host view.
+2. The host enters the admin password. The default password is `123456`.
+3. The host creates a game and receives a six-digit game code.
+4. Students open the Student view, enter the game code and their name, and join without a password.
+5. Joined students see a waiting screen until the host starts the game.
+6. The host starts the game once.
+7. Questions run automatically with 30-second timers.
+8. After each question closes, the app shows a short transition for about 3 seconds.
+9. The next question starts automatically.
+10. Final results appear automatically after the last question.
+
+## Scoring
+
+Correct answers receive speed-based points:
 
 ```text
-VITE_BACKEND_URL=http://localhost:4000
+remainingRatio = remainingMilliseconds / totalQuestionMilliseconds
+points = round(300 + remainingRatio * 700)
 ```
 
-## Bedienung
+- Immediate correct answer: about 1000 points
+- Correct answer halfway through: about 650 points
+- Correct answer near the end: about 300 points
+- Incorrect answer: 0 points
+- Late answer: rejected and 0 points
 
-1. Im Browser die Dozentenansicht oeffnen.
-2. `Spiel erstellen` klicken.
-3. Den sechsstelligen Spielcode an Studierende weitergeben.
-4. Studierende wechseln in die Studierendenansicht, geben Spielcode und Namen ein und treten bei.
-5. Dozent startet das Spiel.
-6. Studierende waehlen pro Frage genau eine Antwort.
-7. Dozent sieht Teilnehmer, Antwortzahlen, Punktestand und Endergebnis live.
+Each student can answer each question only once.
 
-## API und Socket.io Events
+## API and Socket.io Events
 
 REST:
 
-- `POST /api/games` erstellt ein neues Spiel und gibt einen sechsstelligen Spielcode zurueck.
+- `GET /api/health`
+- `POST /api/admin/validate`
+- `POST /api/games`
 
-Socket.io Events:
+`POST /api/games` requires the admin password via `x-admin-password` or `adminPassword` in the JSON body.
 
+Client-to-server Socket.io events:
+
+- `validate-admin-password`
+- `create-game`
 - `join-game`
 - `start-game`
-- `next-question`
 - `submit-answer`
+- `force-next-question`
+- `next-question` legacy alias for `force-next-question`
+- `end-game`
+- `reset-game`
+
+Server-to-client Socket.io events:
+
+- `admin-auth-success`
+- `admin-auth-failed`
+- `game-created`
+- `joined-game`
 - `players-updated`
+- `game-state-updated`
+- `game-starting`
 - `question-updated`
+- `question-started`
+- `question-ended`
+- `transition-started`
 - `scores-updated`
+- `answer-result`
+- `answer-feedback` legacy feedback event
 - `game-ended`
 - `error-message`
 
-Zusaetzlich sendet das Backend `answer-feedback`, damit Studierende nach dem Antworten direkt Feedback bekommen.
-
 ## Render Deployment
 
-Beide Render-Services verwenden dasselbe GitHub-Repository. Der Unterschied liegt in den Root Directories.
+Both Render services use the same GitHub repository. Configure different root directories.
 
-### Backend als Render Web Service
-
-In Render einen neuen Web Service aus demselben GitHub-Repository anlegen:
+### Backend Render Web Service
 
 ```text
 Root Directory: backend
@@ -147,21 +184,16 @@ Build Command: npm install
 Start Command: npm start
 ```
 
-Environment Variable:
+Environment variables:
 
 ```text
-FRONTEND_URL = URL der Render Static Site
+FRONTEND_URL=https://your-frontend-static-site.onrender.com
+ADMIN_PASSWORD=123456
 ```
 
-Beispiel:
+Do not set `PORT` manually.
 
-```text
-FRONTEND_URL=https://dein-quiz-frontend.onrender.com
-```
-
-### Frontend als Render Static Site
-
-In Render eine neue Static Site aus demselben GitHub-Repository anlegen:
+### Frontend Render Static Site
 
 ```text
 Root Directory: frontend
@@ -169,31 +201,35 @@ Build Command: npm install && npm run build
 Publish Directory: dist
 ```
 
-Environment Variable:
+Environment variable:
 
 ```text
-VITE_BACKEND_URL = URL des Render Web Service
+VITE_BACKEND_URL=https://your-backend-web-service.onrender.com
 ```
 
-Beispiel:
+After changing `VITE_BACKEND_URL`, redeploy the frontend because Vite embeds this value during the build.
 
-```text
-VITE_BACKEND_URL=https://dein-quiz-backend.onrender.com
-```
+## Creating Two Render Services From One Repo
 
-## Zwei Render Services aus demselben Repo
+1. Connect the GitHub repository to Render.
+2. Create the backend as a Web Service.
+3. Set backend Root Directory to `backend`.
+4. Set backend Build Command to `npm install`.
+5. Set backend Start Command to `npm start`.
+6. Create the frontend as a Static Site from the same repository.
+7. Set frontend Root Directory to `frontend`.
+8. Set frontend Build Command to `npm install && npm run build`.
+9. Set frontend Publish Directory to `dist`.
+10. Set frontend `VITE_BACKEND_URL` to the backend Web Service URL.
+11. Set backend `FRONTEND_URL` to the frontend Static Site URL.
+12. Redeploy both services after environment variables are saved.
 
-1. GitHub-Repository in Render verbinden.
-2. Ersten Service als `Web Service` erstellen.
-3. Als Root Directory `backend` setzen.
-4. Build Command `npm install` setzen.
-5. Start Command `npm start` setzen.
-6. `FRONTEND_URL` nach Erstellung der Static Site eintragen.
-7. Zweiten Service als `Static Site` erstellen.
-8. Dasselbe GitHub-Repository auswaehlen.
-9. Als Root Directory `frontend` setzen.
-10. Build Command `npm install && npm run build` setzen.
-11. Publish Directory `dist` setzen.
-12. `VITE_BACKEND_URL` auf die Backend-Web-Service-URL setzen.
+For active classroom games, keep the backend as a single instance. Horizontal scaling would create separate in-memory game states.
 
-Wichtig: Da der gesamte Spielzustand nur im RAM des Backend-Prozesses liegt, sollte der Backend-Service fuer laufende Spiele nicht horizontal skaliert werden. Ein Neustart beendet laufende Spiele.
+## Additional Documentation
+
+- [Architecture](docs/architecture.md)
+- [Game flow](docs/game-flow.md)
+- [Render deployment](docs/deployment-render.md)
+- [Scoring](docs/scoring.md)
+- [Admin access](docs/admin-access.md)
