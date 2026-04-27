@@ -503,6 +503,47 @@ h2 {
   margin-top: 0.85rem;
 }
 
+.question-set-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  width: 100%;
+  margin-bottom: 0.15rem;
+}
+
+.question-set-picker button {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 130px;
+  padding: 0.6rem 0.8rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  text-align: left;
+}
+
+.question-set-picker button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: none;
+}
+
+.question-set-picker button.active {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.question-set-picker span {
+  font-weight: 900;
+}
+
+.question-set-picker small {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .student-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;

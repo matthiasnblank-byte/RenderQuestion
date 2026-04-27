@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
+const defaultQuestionSets = [
+  { id: "day1", label: "Tag 1", totalQuestions: 12 },
+  { id: "day2", label: "Tag 2", totalQuestions: 12 }
+];
 
 const initialGameState = {
   gameCode: "",
+  questionSet: "day1",
+  questionSetLabel: "Tag 1",
+  availableQuestionSets: defaultQuestionSets,
   status: "idle",
   players: [],
   scores: [],
@@ -17,7 +25,7 @@ const initialGameState = {
   transitionDurationMs: 3000,
   answerCounts: [0, 0, 0, 0],
   submittedAnswers: 0,
-  totalQuestions: 15,
+  totalQuestions: 12,
   correctAnswerIndex: null
 };
 
@@ -36,6 +44,7 @@ function App() {
   const [answerResult, setAnswerResult] = useState(null);
   const [message, setMessage] = useState("");
   const [lastQuestionIndex, setLastQuestionIndex] = useState(-1);
+  const [selectedQuestionSet, setSelectedQuestionSet] = useState("day1");
 
   useEffect(() => {
     const nextSocket = io(BACKEND_URL, {
@@ -55,8 +64,11 @@ function App() {
       setAdminError(errorMessage || "Incorrect admin password.");
     });
 
-    nextSocket.on("game-created", ({ gameCode: createdCode }) => {
+    nextSocket.on("game-created", ({ gameCode: createdCode, questionSet }) => {
       setGameCode(createdCode);
+      if (questionSet) {
+        setSelectedQuestionSet(questionSet);
+      }
       setMessage("");
     });
 
@@ -135,7 +147,7 @@ function App() {
   }
 
   function createGame() {
-    socket?.emit("create-game");
+    socket?.emit("create-game", { questionSet: selectedQuestionSet });
   }
 
   function startGame() {
@@ -210,6 +222,8 @@ function App() {
           <AdminDashboard
             gameCode={gameCode}
             gameState={gameState}
+            selectedQuestionSet={selectedQuestionSet}
+            onSelectQuestionSet={setSelectedQuestionSet}
             onCreateGame={createGame}
             onStartGame={startGame}
             onForceNextQuestion={forceNextQuestion}
@@ -283,6 +297,8 @@ function AdminLogin({ password, setPassword, error, onSubmit }) {
 function AdminDashboard({
   gameCode,
   gameState,
+  selectedQuestionSet,
+  onSelectQuestionSet,
   onCreateGame,
   onStartGame,
   onForceNextQuestion,
@@ -291,6 +307,10 @@ function AdminDashboard({
 }) {
   const canStart = gameCode && (gameState.status === "waiting" || gameState.status === "finished");
   const isRunning = gameState.status === "running" || gameState.status === "transition";
+  const questionSets = gameState.availableQuestionSets?.length
+    ? gameState.availableQuestionSets
+    : defaultQuestionSets;
+  const canChangeQuestionSet = !gameCode;
 
   return (
     <div className="admin-layout">
@@ -303,7 +323,7 @@ function AdminDashboard({
 
         {gameCode ? (
           <div className="game-code">
-            <span>Game code</span>
+            <span>Game code - {gameState.questionSetLabel || "Tag 1"}</span>
             <strong>{gameCode}</strong>
           </div>
         ) : (
@@ -316,6 +336,20 @@ function AdminDashboard({
         <ProjectedQuestion gameState={gameState} />
 
         <div className="controls">
+          <div className="question-set-picker" aria-label="Question set">
+            {questionSets.map((questionSet) => (
+              <button
+                className={selectedQuestionSet === questionSet.id ? "active" : ""}
+                disabled={!canChangeQuestionSet}
+                key={questionSet.id}
+                onClick={() => onSelectQuestionSet(questionSet.id)}
+                type="button"
+              >
+                <span>{questionSet.label}</span>
+                <small>{questionSet.totalQuestions} questions</small>
+              </button>
+            ))}
+          </div>
           <button onClick={onCreateGame}>Create game</button>
           <button onClick={onStartGame} disabled={!canStart}>
             Start game

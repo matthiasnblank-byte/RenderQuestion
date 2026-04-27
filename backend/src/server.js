@@ -2,11 +2,11 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
-import { questions } from "./questions.js";
+import { getQuestionSet, questionDecks } from "./questions.js";
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "123456";
 
@@ -49,10 +49,13 @@ function createGameCode() {
   return code;
 }
 
-function createGame() {
+function createGame(questionSetId = "day1") {
+  const questionSet = getQuestionSet(questionSetId);
   const gameCode = createGameCode();
   const game = {
     gameCode,
+    questionSet: questionSet.id,
+    questionSetLabel: questionSet.label,
     players: [],
     currentQuestionIndex: -1,
     questionStartedAt: null,
@@ -69,6 +72,10 @@ function createGame() {
 
   games.set(gameCode, game);
   return game;
+}
+
+function gameQuestions(game) {
+  return getQuestionSet(game.questionSet).questions;
 }
 
 function isAdminPassword(value) {
@@ -109,6 +116,7 @@ function clearGameTimers(game) {
 }
 
 function publicQuestion(game) {
+  const questions = gameQuestions(game);
   if (game.currentQuestionIndex < 0 || game.currentQuestionIndex >= questions.length) {
     return null;
   }
@@ -154,11 +162,15 @@ function leaderboard(game) {
 
 function gameState(game) {
   const question = publicQuestion(game);
+  const questions = gameQuestions(game);
   const includeCorrectAnswer =
     question && (game.status === "transition" || game.status === "finished");
 
   return {
     gameCode: game.gameCode,
+    questionSet: game.questionSet,
+    questionSetLabel: game.questionSetLabel,
+    availableQuestionSets: questionDecks,
     status: game.status,
     players: game.players,
     scores: leaderboard(game),
@@ -208,6 +220,7 @@ function emitToSocket(socket, game) {
 
 function startQuestion(game, questionIndex) {
   clearGameTimers(game);
+  const questions = gameQuestions(game);
 
   if (questionIndex >= questions.length) {
     finishGame(game);
@@ -289,7 +302,7 @@ function resetGame(game) {
 }
 
 function scoreAnswer(game, answerIndex, answeredAt) {
-  const question = questions[game.currentQuestionIndex];
+  const question = gameQuestions(game)[game.currentQuestionIndex];
   const isCorrect = answerIndex === question.correctAnswerIndex;
 
   if (!isCorrect) {
@@ -328,10 +341,12 @@ app.post("/api/games", (req, res) => {
     return;
   }
 
-  const game = createGame();
+  const game = createGame(req.body?.questionSet);
   res.status(201).json({
     gameCode: game.gameCode,
-    totalQuestions: questions.length
+    questionSet: game.questionSet,
+    questionSetLabel: game.questionSetLabel,
+    totalQuestions: gameQuestions(game).length
   });
 });
 
@@ -349,17 +364,19 @@ io.on("connection", (socket) => {
     socket.emit("admin-auth-success");
   });
 
-  socket.on("create-game", () => {
+  socket.on("create-game", ({ questionSet } = {}) => {
     if (!requireAdmin(socket)) return;
 
-    const game = createGame();
+    const game = createGame(questionSet);
     socket.join(game.gameCode);
     socket.data.gameCode = game.gameCode;
     socket.data.role = "admin";
 
     socket.emit("game-created", {
       gameCode: game.gameCode,
-      totalQuestions: questions.length
+      questionSet: game.questionSet,
+      questionSetLabel: game.questionSetLabel,
+      totalQuestions: gameQuestions(game).length
     });
     emitToSocket(socket, game);
   });
@@ -538,7 +555,7 @@ io.on("connection", (socket) => {
     }
 
     const { isCorrect, pointsAwarded } = scoreAnswer(game, normalizedAnswerIndex, answeredAt);
-    const correctAnswerIndex = questions[game.currentQuestionIndex].correctAnswerIndex;
+    const correctAnswerIndex = gameQuestions(game)[game.currentQuestionIndex].correctAnswerIndex;
 
     answers.set(socket.id, {
       playerId: socket.id,

@@ -55,7 +55,7 @@ npm start
 The backend runs locally at:
 
 ```text
-http://localhost:4000
+http://localhost:3000
 ```
 
 ### Start the Frontend
@@ -79,12 +79,12 @@ http://localhost:5173
 ```text
 FRONTEND_URL=http://localhost:5173
 ADMIN_PASSWORD=123456
-PORT=4000
+PORT=3000
 ```
 
 `ADMIN_PASSWORD` is optional. If it is not set, the backend uses `123456`.
 
-`PORT` does not need to be set locally because the server falls back to `4000`. On Render, `PORT` is provided automatically and the backend reads it from `process.env.PORT`.
+`PORT` does not need to be set locally because the server falls back to `3000`. On Render, `PORT` is provided automatically and the backend reads it from `process.env.PORT`.
 
 Example:
 
@@ -96,10 +96,10 @@ FRONTEND_URL=http://localhost:5173 ADMIN_PASSWORD=123456 npm run dev
 ### Frontend
 
 ```text
-VITE_BACKEND_URL=http://localhost:4000
+VITE_BACKEND_URL=http://localhost:3000
 ```
 
-The frontend has `http://localhost:4000` as a local fallback. On Render, set `VITE_BACKEND_URL` to the backend Web Service URL and redeploy the Static Site.
+The frontend has `http://localhost:3000` as a local fallback. On Render, set `VITE_BACKEND_URL` to the backend Web Service URL and redeploy the Static Site.
 
 ## Gameplay
 
