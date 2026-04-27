@@ -263,14 +263,13 @@ function closeQuestion(game) {
   emitGameState(game);
 
   game.timers.transitionTimeout = setTimeout(() => {
-    const nextQuestionIndex = game.currentQuestionIndex + 1;
-    if (nextQuestionIndex >= questions.length) {
-      finishGame(game);
-      return;
-    }
-
-    startQuestion(game, nextQuestionIndex);
+    startQuestion(game, game.currentQuestionIndex + 1);
   }, TRANSITION_DURATION_MS);
+}
+
+function advanceQuestion(game) {
+  const nextQuestionIndex = Math.max(0, game.currentQuestionIndex + 1);
+  startQuestion(game, nextQuestionIndex);
 }
 
 function finishGame(game) {
@@ -459,13 +458,8 @@ io.on("connection", (socket) => {
     const game = getGameOrEmit(socket, gameCode);
     if (!game) return;
 
-    if (game.status === "running") {
-      closeQuestion(game);
-      return;
-    }
-
-    if (game.status === "transition") {
-      startQuestion(game, game.currentQuestionIndex + 1);
+    if (game.status === "running" || game.status === "transition") {
+      advanceQuestion(game);
       return;
     }
 
@@ -478,13 +472,8 @@ io.on("connection", (socket) => {
     const game = getGameOrEmit(socket, gameCode);
     if (!game) return;
 
-    if (game.status === "running") {
-      closeQuestion(game);
-      return;
-    }
-
-    if (game.status === "transition") {
-      startQuestion(game, game.currentQuestionIndex + 1);
+    if (game.status === "running" || game.status === "transition") {
+      advanceQuestion(game);
       return;
     }
 

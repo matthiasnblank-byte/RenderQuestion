@@ -4,122 +4,122 @@ export const questionSets = {
     label: "Tag 1",
     questions: [
       {
-        text: "Which task was named as part of financial management?",
+        text: "Which set correctly names the three core financial statements discussed in the lecture?",
         options: [
-          "Liquidity management",
-          "Writing frontend CSS",
-          "Producing raw materials",
-          "Designing office furniture"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "Which three categories were used to explain reasons for inflation?",
-        options: [
-          "Supply, demand and monetary reasons",
-          "Assets, liabilities and equity",
-          "Profit, EBIT and EBITDA",
-          "Stocks, bonds and options"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "Which statements were presented as the three major financial statements?",
-        options: [
+          "Budget plan, roadmap and strategy map",
+          "Rating report, loan contract and dividend policy",
           "Income statement, balance sheet and cashflow statement",
-          "Budget, roadmap and mission statement",
-          "Rating report, term sheet and stock index",
-          "Invoice, receipt and bank contract"
+          "Order book, invoice list and bank statement"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "A machine is depreciated by 2,000 EUR at year-end. What is the direct accounting effect?",
+        options: [
+          "Cash decreases by 2,000 EUR immediately",
+          "Profit decreases, while there is no direct cash outflow",
+          "Revenue increases because depreciation is income",
+          "Debt decreases automatically by 2,000 EUR"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "Why is the equity ratio relevant when assessing a company?",
+        options: [
+          "It measures the average sales price per product",
+          "It shows whether dividends are tax deductible",
+          "It replaces the need for a cashflow statement",
+          "It indicates financial stability and independence from creditors"
+        ],
+        correctAnswerIndex: 3
+      },
+      {
+        text: "A company reports profit of 2,000 EUR and revenues of 7,000 EUR. Which KPI is calculated as 2,000 / 7,000?",
+        options: [
+          "Return on sales",
+          "Equity ratio",
+          "Internal rate of return",
+          "Probability of default"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "What does a balance sheet show according to the lecture?",
+        text: "What does EBITDA exclude compared with operating earnings after all expenses?",
         options: [
-          "Where the money comes from and where it is invested",
-          "Only the profit of the current year",
-          "Only the monthly cash receipts",
-          "The market price of all competitors"
+          "Only material costs",
+          "Only current assets",
+          "Interest, taxes, depreciation and amortization",
+          "Only dividend payments"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "What is the main limitation of static investment appraisal methods?",
+        options: [
+          "They require a terminal value calculation",
+          "They ignore the exact timing of payments and the time value of money",
+          "They can only be used for listed companies",
+          "They always overestimate depreciation"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "What does a positive Net Present Value indicate?",
+        options: [
+          "The project creates value after discounting cashflows at the required return",
+          "The payback period is exactly one year",
+          "The project has no risk",
+          "The accounting profit is always higher than cashflow"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "Which stakeholder interest was assigned to banks?",
+        text: "How is the Internal Rate of Return defined?",
         options: [
-          "Interest rates",
-          "Salary payments",
-          "Tax compliance",
-          "Marketing campaigns"
+          "The average annual accounting profit divided by revenues",
+          "The discount rate at which the Net Present Value equals zero",
+          "The interest rate set by the company's bank",
+          "The minimum equity ratio required for a loan"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "What are opportunity costs in investment decisions?",
+        options: [
+          "Historical costs that have already been paid and cannot be changed",
+          "Costs that appear only in the tax balance sheet",
+          "The forgone return or benefit of the next best alternative",
+          "Depreciation expenses without any economic meaning"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "Which financing source is an example of internal financing?",
+        options: [
+          "Retaining profits instead of paying them out as dividends",
+          "Issuing new shares in an IPO",
+          "Taking a bank loan",
+          "Selling a bond to investors"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "How is Return on Sales calculated?",
+        text: "Which statement best describes a key difference between equity and debt?",
         options: [
-          "Profit divided by revenues",
-          "Equity divided by capital",
-          "Profit divided by equity",
-          "Debt divided by cash"
+          "Dividends are tax deductible, interest payments are not",
+          "Equity always has a fixed maturity, debt never has one",
+          "Debt improves the rating in every case",
+          "Debt usually has repayment obligations; equity does not have a fixed maturity"
         ],
-        correctAnswerIndex: 0
+        correctAnswerIndex: 3
       },
       {
-        text: "How is the Equity Ratio calculated?",
+        text: "Why does a company's rating influence its financing costs?",
         options: [
-          "Equity divided by capital",
-          "Profit divided by revenues",
-          "Cash divided by sales",
-          "Revenue divided by costs"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is EBITDA?",
-        options: [
-          "Earnings before interest, taxes, depreciation and amortization",
-          "Earnings after all taxes and dividends",
-          "Cash receipts minus cash expenditures only",
-          "Equity before debt and assets"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "Why are static investment approaches called static?",
-        options: [
-          "They consider only one year or an average year",
-          "They always require a stock market price",
-          "They use only dynamic interest rates",
-          "They ignore all cost information"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What does the Net Present Value method do?",
-        options: [
-          "Discounts future cashflows to year 0",
-          "Compares only one year's average cost",
-          "Ignores the timing of payments",
-          "Measures only accounting depreciation"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "How was the Internal Rate of Return defined?",
-        options: [
-          "The interest rate at which the net present value is zero",
-          "The interest rate paid on every bank loan",
-          "The average profit divided by revenues",
-          "The probability that a company defaults"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is the leverage effect in the financing example?",
-        options: [
-          "Debt can increase return on equity if interest rates are low enough",
-          "Debt always lowers return on equity to zero",
-          "Equity financing makes bankruptcy impossible",
-          "Dividend payments are tax deductible"
+          "The rating reflects default risk, which affects the interest rate investors demand",
+          "The rating replaces all bank negotiations",
+          "The rating defines the legal dividend amount",
+          "The rating measures only the company's revenue growth"
         ],
         correctAnswerIndex: 0
       }
@@ -130,124 +130,124 @@ export const questionSets = {
     label: "Tag 2",
     questions: [
       {
-        text: "Which two components mainly make up a DCF company valuation?",
+        text: "In a DCF valuation, which two components usually make up the enterprise value?",
         options: [
-          "Detailed periods and terminal value",
-          "Assets and liabilities only",
-          "Revenue and marketing budget",
-          "Stock price and dividend yield only"
+          "Detailed planning period and terminal value",
+          "Book value of assets and historical dividends",
+          "Market capitalization and number of employees",
+          "Revenue growth and tax rate only"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "What does the net asset value approach focus on?",
+        text: "What is a critical assumption in the terminal value of a DCF model?",
         options: [
-          "The current value or sum of the parts",
-          "Only future cashflows in eternity",
-          "The price of one similar stock index",
-          "The probability of default"
+          "The company will liquidate all assets after one year",
+          "The dividend yield is always zero",
+          "The rating must be AAA",
+          "A sustainable long-term growth rate is applied to future cashflows"
+        ],
+        correctAnswerIndex: 3
+      },
+      {
+        text: "When is a comparable valuation approach especially useful?",
+        options: [
+          "When no similar companies or transactions exist",
+          "When the business has no revenues",
+          "When reliable peer companies or market multiples are available",
+          "When interest rates must be ignored completely"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "What is the main idea behind shareholder value management?",
+        options: [
+          "Maximizing value for investors through dividends and share price development",
+          "Avoiding capital markets and external investors",
+          "Minimizing all accounting transparency",
+          "Replacing strategy with short-term cost cutting only"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "What is the core idea of shareholder value?",
+        text: "Why do investors usually demand a risk premium?",
         options: [
-          "Maximizing value for investors through dividends and stock price",
-          "Minimizing all financial reporting",
-          "Avoiding capital markets completely",
-          "Maximizing employee travel costs"
+          "Because higher uncertainty about returns must be compensated",
+          "Because riskier assets are legally tax-free",
+          "Because volatility guarantees higher profits",
+          "Because bonds cannot default"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "What is a stock market index such as DAX, Dow Jones or NASDAQ 100?",
+        text: "What is the implication of market efficiency theory?",
         options: [
-          "A weighted average of important stocks",
-          "A list of bank loan covenants",
-          "A direct replacement for a cashflow statement",
-          "A tax rule for dividend payments"
+          "Only insiders can trade profitably",
+          "Book values always equal market values",
+          "Public information is quickly reflected in prices, making sustainable excess returns difficult",
+          "Dividends are irrelevant for every investor"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "How should the Price-Earnings Ratio (PER) be interpreted professionally?",
+        options: [
+          "A high PER always means a stock is bad",
+          "A low PER always means a stock is cheap and risk-free",
+          "PER is useful only together with context such as growth, risk and peers",
+          "PER is the same as dividend yield"
+        ],
+        correctAnswerIndex: 2
+      },
+      {
+        text: "Which statement best describes the logic of M&A synergies?",
+        options: [
+          "Synergies are only accounting effects without cash relevance",
+          "Synergies can arise from cost savings, new markets or additional capabilities",
+          "Synergies occur automatically in every acquisition",
+          "Synergies are identical to the purchase price"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "What is a typical feature of an asset deal compared with a share deal?",
+        options: [
+          "The buyer purchases selected assets rather than the shares of the legal entity",
+          "The buyer must always acquire all hidden liabilities",
+          "The seller always receives new shares instead of cash",
+          "The transaction is legally identical to buying listed stock"
         ],
         correctAnswerIndex: 0
       },
       {
-        text: "How was risk described in the capital markets section?",
+        text: "What is the economic idea of natural hedging?",
         options: [
-          "Uncertainty about the return",
-          "A guaranteed positive return",
-          "Only the cost of bookkeeping",
-          "The number of shares in an index"
+          "Speculating on higher commodity prices",
+          "Using options for all foreign currency exposure",
+          "Avoiding every international transaction",
+          "Aligning cost and revenue structures, for example by producing where sales occur"
         ],
-        correctAnswerIndex: 0
+        correctAnswerIndex: 3
       },
       {
-        text: "What is the message of market efficiency theory?",
+        text: "What is the key difference between a future and an option in hedging?",
         options: [
-          "There is no free lunch because public information is already reflected",
-          "Experts can always earn sustainable excess returns without risk",
-          "Stock prices never react to new information",
-          "Only dividends determine a company's value"
+          "A future has no counterparty risk, while an option always has unlimited loss",
+          "An option gives a right without an obligation, while a future locks in the transaction",
+          "A future is only used for shares, while options are only used for currencies",
+          "An option has no price, while a future always requires a high premium"
         ],
-        correctAnswerIndex: 0
+        correctAnswerIndex: 1
       },
       {
-        text: "What does PER stand for in stock KPIs?",
+        text: "Which working capital action can improve liquidity?",
         options: [
-          "Price earning ratio",
-          "Profit equity return",
-          "Projected expense rate",
-          "Public earnings reserve"
+          "Increasing inventory holding periods indefinitely",
+          "Reducing storage time, accelerating receivables and extending payables where possible",
+          "Replacing cash planning with dividend planning",
+          "Increasing current assets without changing current liabilities"
         ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is a typical goal of M&A?",
-        options: [
-          "Creating synergy effects such as entering new regions or acquiring knowledge",
-          "Avoiding any change in the company",
-          "Eliminating all tax reporting",
-          "Replacing financial planning with stock picking"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is bought in an asset deal?",
-        options: [
-          "Selected or all assets",
-          "Only the shares of the target company",
-          "Only future dividends",
-          "Only the company name"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is the basic idea of natural hedging?",
-        options: [
-          "Invest where you sell so cost and income structures are comparable",
-          "Buy options for every possible market movement",
-          "Avoid all foreign revenues",
-          "Use only short-term bank debt"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "What is a disadvantage of using a future for hedging?",
-        options: [
-          "No upside opportunity",
-          "The currency risk becomes larger by definition",
-          "It cannot be used with currencies",
-          "It automatically creates unlimited dividends"
-        ],
-        correctAnswerIndex: 0
-      },
-      {
-        text: "How is working capital defined in the lecture?",
-        options: [
-          "Current assets minus current liabilities",
-          "Profit minus depreciation",
-          "Equity divided by capital",
-          "Revenue divided by cash balance"
-        ],
-        correctAnswerIndex: 0
+        correctAnswerIndex: 1
       }
     ]
   }
