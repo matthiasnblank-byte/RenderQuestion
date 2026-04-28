@@ -122,6 +122,36 @@ export const questionSets = {
           "The rating measures only the company's revenue growth"
         ],
         correctAnswerIndex: 0
+      },
+      {
+        text: "Which statement best describes liquidity planning?",
+        options: [
+          "It forecasts whether the company can meet payment obligations when they fall due",
+          "It replaces the income statement for tax reporting",
+          "It calculates the exact market value of equity",
+          "It eliminates all financing needs automatically"
+        ],
+        correctAnswerIndex: 0
+      },
+      {
+        text: "What is the basic effect of increasing leverage, assuming the return on assets exceeds the debt interest rate?",
+        options: [
+          "It always reduces the return on equity to zero",
+          "It can increase return on equity, but also raises financial risk",
+          "It removes the need to pay interest",
+          "It turns debt into retained earnings"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "Which item belongs in operating cashflow rather than investment cashflow?",
+        options: [
+          "Buying a new production machine",
+          "Selling a subsidiary",
+          "Cash received from customers",
+          "Issuing new shares"
+        ],
+        correctAnswerIndex: 2
       }
     ]
   },
@@ -246,6 +276,36 @@ export const questionSets = {
           "Reducing storage time, accelerating receivables and extending payables where possible",
           "Replacing cash planning with dividend planning",
           "Increasing current assets without changing current liabilities"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "What is a central purpose of due diligence in an M&A transaction?",
+        options: [
+          "To avoid any discussion of the purchase price",
+          "To identify financial, legal and commercial risks before signing",
+          "To guarantee that all synergies will be realized",
+          "To replace the need for a purchase agreement"
+        ],
+        correctAnswerIndex: 1
+      },
+      {
+        text: "Which multiple is commonly used to compare enterprise values across companies?",
+        options: [
+          "Enterprise Value divided by EBITDA",
+          "Inventory divided by payroll",
+          "Tax expense divided by share price",
+          "Dividend per share divided by total assets"
+        ],
+        correctAnswerIndex: 0
+      },
+      {
+        text: "Why is scenario analysis useful in valuation and investment decisions?",
+        options: [
+          "It proves that the base case will definitely happen",
+          "It shows how results change under different assumptions",
+          "It removes uncertainty from future cashflows",
+          "It replaces discounting with accounting profit"
         ],
         correctAnswerIndex: 1
       }

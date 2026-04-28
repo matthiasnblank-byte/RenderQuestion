@@ -4,8 +4,8 @@ import { io } from "socket.io-client";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const defaultQuestionSets = [
-  { id: "day1", label: "Tag 1", totalQuestions: 12 },
-  { id: "day2", label: "Tag 2", totalQuestions: 12 }
+  { id: "day1", label: "Tag 1", totalQuestions: 15 },
+  { id: "day2", label: "Tag 2", totalQuestions: 15 }
 ];
 
 const initialGameState = {
@@ -22,10 +22,10 @@ const initialGameState = {
   questionEndsAt: null,
   transitionEndsAt: null,
   questionDurationMs: 30000,
-  transitionDurationMs: 3000,
+  transitionDurationMs: 10000,
   answerCounts: [0, 0, 0, 0],
   submittedAnswers: 0,
-  totalQuestions: 12,
+  totalQuestions: 15,
   correctAnswerIndex: null
 };
 
@@ -441,7 +441,12 @@ function ProjectedQuestion({ gameState }) {
           </div>
         ))}
       </div>
-      {isTransition ? <div className="closed-banner">Question closed. Answers are locked.</div> : null}
+      {isTransition ? (
+        <>
+          <RoundLeaderEffect scores={gameState.scores} />
+          <div className="closed-banner">Question closed. Answers are locked.</div>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -508,7 +513,8 @@ function StudentGame({ joinedStudent, gameState, selectedAnswer, answerResult, o
       <div className="student-layout">
         <section className="student-stage">
           <p className="eyebrow">Question closed</p>
-          <h2>Waiting for the next question</h2>
+          <h2>Current leaders</h2>
+          <RoundLeaderEffect scores={gameState.scores} />
           {answerResult ? (
             <AnswerResult result={answerResult} />
           ) : (
@@ -646,7 +652,7 @@ function PlayerList({ players }) {
   );
 }
 
-function Leaderboard({ scores }) {
+function Leaderboard({ scores, startRank = 1 }) {
   if (!scores.length) {
     return <p className="muted">No scores yet.</p>;
   }
@@ -656,7 +662,7 @@ function Leaderboard({ scores }) {
       {scores.map((entry, index) => (
         <li key={entry.id}>
           <span>
-            <strong>{index + 1}.</strong> {entry.name}
+            <strong>{startRank + index}.</strong> {entry.name}
           </span>
           <strong>{entry.score}</strong>
         </li>
@@ -667,6 +673,43 @@ function Leaderboard({ scores }) {
 
 const RANK_MEDALS = ["🥇", "🥈", "🥉"];
 const RANK_CLASSES = ["rank-1", "rank-2", "rank-3"];
+
+function RoundLeaderEffect({ scores }) {
+  const leaders = scores.slice(0, 3);
+
+  if (!leaders.length) {
+    return (
+      <div className="round-leaders empty-leaders">
+        <p className="eyebrow">Round update</p>
+        <strong>No leader yet</strong>
+      </div>
+    );
+  }
+
+  return (
+    <div className="round-leaders">
+      <div className="leader-crown" aria-hidden="true">
+        {RANK_MEDALS[0]}
+      </div>
+      <div className="leader-copy">
+        <p className="eyebrow">Currently leading</p>
+        <strong>{leaders[0].name}</strong>
+        <span>{leaders[0].score} pts</span>
+      </div>
+      {leaders.length > 1 ? (
+        <ol className="leader-chasers" aria-label="Top three players">
+          {leaders.slice(1).map((entry, index) => (
+            <li key={entry.id}>
+              <span>{index + 2}</span>
+              <strong>{entry.name}</strong>
+              <em>{entry.score}</em>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
+  );
+}
 
 function VictoryCeremony({ scores, ownScore, playerId }) {
   const top3 = scores.slice(0, 3);
